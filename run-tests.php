@@ -217,6 +217,7 @@ else{
 		'finished_at'   => NULL,
 		'execution_time'=> NULL,
 		'result_xml'    => '',
+		'timers'        => array()
 	);
 }
 
@@ -1500,14 +1501,11 @@ TEST $file
 				$env['USE_ZEND_ALLOC'] = '1';
 			}
 
-			if (junit_enabled()) {
-				$test_started_at	= microtime(true);
-			}
+			junit_start_timer($shortname);
+
 			$output = system_with_timeout("$extra $php $pass_options -q $ini_settings -d display_errors=0 $test_skipif", $env);
-			if (junit_enabled()) {
-				$test_finished_at   = microtime(true);
-				$test_execution_time= number_format($test_finished_at-$test_started_at, 2);
-			}
+
+			junit_finish_timer($shortname);
 
 			if (!$cfg['keep']['skip']) {
 				@unlink($test_skipif);
@@ -1529,8 +1527,8 @@ TEST $file
 					@unlink($test_skipif);
 				}
 
-                // TODO: check for m[1] existence
-                junit_mark_test_as('SKIP', $shortname, $tested, $test_execution_time, "<![CDATA[\n$m[1]\n]]>");
+				$message = !empty($m[1]) ? $m[1] : '';
+                junit_mark_test_as('SKIP', $shortname, $tested, null, "<![CDATA[\n$message\n]]>");
 				return 'SKIPPED';
 			}
 
@@ -1586,7 +1584,7 @@ TEST $file
 			// a redirected test never fails
 			$IN_REDIRECT = false;
 
-            junit_mark_test_as('PASS', $shortname, $tested, $test_execution_time);
+            junit_mark_test_as('PASS', $shortname, $tested);
 			return 'REDIR';
 
 		} else {
@@ -1619,7 +1617,7 @@ TEST $file
 								'info'   => "$bork_info [$file]",
 		);
 
-        junit_mark_test_as('BORK', $shortname, $tested, $test_execution_time, $bork_info);
+        junit_mark_test_as('BORK', $shortname, $tested, null, $bork_info);
 
 		return 'BORKED';
 	}
@@ -1674,7 +1672,7 @@ TEST $file
 		$env['REQUEST_METHOD'] = 'POST';
 
 		if (empty($request)) {
-            junit_mark_test_as('BORK', $shortname, $tested, $test_execution_time, 'empty $request');
+            junit_mark_test_as('BORK', $shortname, $tested, null, 'empty $request');
 			return 'BORKED';
 		}
 
@@ -1737,14 +1735,11 @@ HTTP_COOKIE     = " . $env['HTTP_COOKIE'] . "
 COMMAND $cmd
 ";
 
-	if (junit_enabled()) {
-		$test_started_at    = microtime(true);
-	}
+	junit_start_timer($shortname);
+
 	$out = system_with_timeout($cmd, $env, isset($section_text['STDIN']) ? $section_text['STDIN'] : null);
-	if (junit_enabled()) {
-		$test_finished_at   = microtime(true);
-		$test_execution_time= number_format($test_finished_at-$test_started_at, 2);
-	}
+
+	junit_finish_timer($shortname);
 
 	if (array_key_exists('CLEAN', $section_text) && (!$no_clean || $cfg['keep']['clean'])) {
 
@@ -1933,8 +1928,7 @@ COMMAND $cmd
 					$info = " (warn: XFAIL section but test passes)";
 				}else {
 					show_result("PASS", $tested, $tested_file, '', $temp_filenames);
-                    // TODO: store execution time internally in $JUNIT
-                    junit_mark_test_as('PASS', $shortname, $tested, $test_execution_time);
+                    junit_mark_test_as('PASS', $shortname, $tested);
 					return 'PASSED';
 				}
 			}
@@ -1964,7 +1958,7 @@ COMMAND $cmd
 					$info = " (warn: XFAIL section but test passes)";
 				}else {
 					show_result("PASS", $tested, $tested_file, '', $temp_filenames);
-                    junit_mark_test_as('PASS', $shortname, $tested, $test_execution_time);
+                    junit_mark_test_as('PASS', $shortname, $tested);
 					return 'PASSED';
 				}
 			}
@@ -2061,7 +2055,7 @@ $output
 		$php = $old_php;
 	}
 
-    junit_mark_test_as($restype, str_replace($cwd . '/', '', $tested_file), $tested, $test_execution_time, $info, "<![CDATA[\n" . preg_replace('/\e/', '<esc>', $diff) . "\n]]>");
+    junit_mark_test_as($restype, str_replace($cwd . '/', '', $tested_file), $tested, null, $info, "<![CDATA[\n " . preg_replace('/\e/', '<esc>', $diff) . "\n]]>");
 
 	return $restype[0] . 'ED';
 }
@@ -2571,21 +2565,23 @@ function junit_enabled() {
 
 /**
  * @param array|string $type
- * @param string $class_name
+ * @param string $file_name
  * @param string $test_name
  * @param int|string $time
  * @param string $message
  * @param string $details
  * @return void
  */
-function junit_mark_test_as($type, $class_name, $test_name, $time = 0, $message = '', $details = '') {
+function junit_mark_test_as($type, $file_name, $test_name, $time = null, $message = '', $details = '') {
     global $JUNIT;
     if (!junit_enabled()) return;
 
     $escaped_test_name = htmlspecialchars($test_name, ENT_QUOTES);
 
+	$time = null !== $time ? $time : junit_get_timer($file_name);
+
     $JUNIT['test_total']++;
-    $JUNIT['result_xml'] .= "<testcase classname='$class_name' name='$escaped_test_name' time='$time'>\n";
+    $JUNIT['result_xml'] .= "<testcase classname='$file_name' name='$escaped_test_name' time='$time'>\n";
 
     if (is_array($type)) {
         $output_type = $type[0] . 'ED';
@@ -2616,6 +2612,43 @@ function junit_mark_test_as($type, $class_name, $test_name, $time = 0, $message 
 
 }
 
+
+function junit_get_timer($file_name) {
+	global $JUNIT;
+	if (!junit_enabled()) return 0;
+
+	if (isset($JUNIT['timers'][$file_name]['total'])) {
+		return $JUNIT['timers'][$file_name]['total'];
+	}
+
+	return 0;
+}
+
+function junit_start_timer($file_name) {
+	global $JUNIT;
+	if (!junit_enabled()) return;
+
+	if (!isset($JUNIT['timers'][$file_name]['start'])) {
+		$JUNIT['timers'][$file_name]['start'] = microtime(true);
+	}
+}
+
+function junit_finish_timer($file_name) {
+	global $JUNIT;
+	if (!junit_enabled()) return;
+
+	if (!isset($JUNIT['timers'][$file_name]['start'])) {
+		error("Timer for $file_name was not started!");
+	}
+
+	if (isset($JUNIT['timers'][$file_name]['total'])) {
+		return;
+	}
+
+	$start = $JUNIT['timers'][$file_name]['start'];
+	$JUNIT['timers'][$file_name]['total'] = number_format(microtime(true) - $start, 2);
+	unset($JUNIT['timers'][$file_name]['start']);
+}
 
 /*
  * Local variables:
