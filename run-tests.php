@@ -832,7 +832,7 @@ HELP;
 			save_or_mail_results();
 		}
 		
-		save_junit_xml();
+		junit_save_xml();
 
 		if (getenv('REPORT_EXIT_STATUS') == 1 and preg_match('/FAILED(?: |$)/', implode(' ', $test_results))) {
 			exit(1);
@@ -968,7 +968,7 @@ if ($html_output) {
 
 save_or_mail_results();
 
-save_junit_xml();
+junit_save_xml();
 
 if (getenv('REPORT_EXIT_STATUS') == 1 and $sum_results['FAILED']) {
 	exit(1);
@@ -2549,7 +2549,7 @@ function show_result($result, $tested, $tested_file, $extra = '', $temp_filename
 	}
 }
 
-function save_junit_xml() {
+function junit_save_xml() {
 	global $JUNIT;
     if (!junit_enabled()) return;
 
