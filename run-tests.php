@@ -2543,7 +2543,8 @@ function junit_init() {
 			'finished_at'   => NULL,
 			'execution_time'=> NULL,
 			'result_xml'    => '',
-			'timers'        => array()
+			'timers'        => array(),
+			'suites'        => array()
 		);
 	}
 
@@ -2638,6 +2639,10 @@ function junit_start_timer($file_name) {
 	if (!isset($JUNIT['timers'][$file_name]['start'])) {
 		$JUNIT['timers'][$file_name]['start'] = microtime(true);
 	}
+}
+
+function junit_get_suite($file_name) {
+	return dirname($file_name);
 }
 
 function junit_finish_timer($file_name) {
