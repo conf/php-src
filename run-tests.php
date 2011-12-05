@@ -200,26 +200,7 @@ if (getenv('TEST_PHP_DETAILED')) {
 	$DETAILED = 0;
 }
 
-// Check whether a junit log is wanted.
-$JUNIT = getenv('TEST_PHP_JUNIT');
-if (empty($JUNIT) || (!file_exists($JUNIT) && !is_writable(dirname($JUNIT))) || (file_exists($JUNIT) && !is_writable($JUNIT)) || !($JUNIT = @fopen($JUNIT, 'w'))) {
-	$JUNIT = FALSE;
-}
-else{
-	$JUNIT = array(
-		'fp'            => $JUNIT,
-		'test_total'    => 0,
-		'test_pass'     => 0,
-		'test_fail'     => 0,
-		'test_error'    => 0,
-		'test_skip'     => 0,
-		'started_at'    => microtime(true),
-		'finished_at'   => NULL,
-		'execution_time'=> NULL,
-		'result_xml'    => '',
-		'timers'        => array()
-	);
-}
+junit_init();
 
 if (getenv('SHOW_ONLY_GROUPS')) {
 	$SHOW_ONLY_GROUPS = explode(",", getenv('SHOW_ONLY_GROUPS'));
@@ -2541,6 +2522,32 @@ function show_result($result, $tested, $tested_file, $extra = '', $temp_filename
 			"<td>$mem</td>" .
 			"</tr>\n");
 	}
+}
+
+function junit_init() {
+	// Check whether a junit log is wanted.
+	$JUNIT = getenv('TEST_PHP_JUNIT');
+	if (empty($JUNIT)) {
+		$JUNIT = FALSE;
+	} elseif (!$fp = fopen($JUNIT, 'w')) {
+		error("Failed to open $JUNIT for writing.");
+	} else {
+		$JUNIT = array(
+			'fp'            => $fp,
+			'test_total'    => 0,
+			'test_pass'     => 0,
+			'test_fail'     => 0,
+			'test_error'    => 0,
+			'test_skip'     => 0,
+			'started_at'    => microtime(true),
+			'finished_at'   => NULL,
+			'execution_time'=> NULL,
+			'result_xml'    => '',
+			'timers'        => array()
+		);
+	}
+
+	$GLOBALS['JUNIT'] = $JUNIT;
 }
 
 function junit_save_xml() {
