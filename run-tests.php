@@ -2670,7 +2670,7 @@ function junit_start_timer($file_name) {
 
 		$suite = junit_get_suitename_for($file_name);
 		junit_init_suite($suite);
-		$JUNIT['suites'][$suite]['files'][] = $file_name;
+		$JUNIT['suites'][$suite]['files'][$file_name] = $file_name;
 	}
 }
 
@@ -2712,12 +2712,12 @@ function junit_finish_timer($file_name) {
 		error("Timer for $file_name was not started!");
 	}
 
-	if (isset($JUNIT['files'][$file_name]['total'])) {
-		return;
-	}
+	if (!isset($JUNIT['files'][$file_name]['total'])) {
+        $JUNIT['files'][$file_name]['total'] = 0;
+    }
 
 	$start = $JUNIT['files'][$file_name]['start'];
-	$JUNIT['files'][$file_name]['total'] = microtime(true) - $start;
+	$JUNIT['files'][$file_name]['total'] += microtime(true) - $start;
 	unset($JUNIT['files'][$file_name]['start']);
 }
 
