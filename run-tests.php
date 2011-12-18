@@ -2612,9 +2612,8 @@ function junit_mark_test_as($type, $file_name, $test_name, $time = null, $messag
 	$time = null !== $time ? $time : junit_get_timer($file_name);
 	junit_suite_record($suite, 'execution_time', $time);
 
-    $escaped_test_name = htmlspecialchars($test_name, ENT_QUOTES);
-    $class_name = junit_path_to_classname($file_name);
-    $JUNIT['files'][$file_name]['xml'] = "<testcase classname='$class_name' name='$escaped_test_name' time='$time'>\n";
+    $escaped_test_name = basename($file_name) . ' - ' . htmlspecialchars($test_name, ENT_QUOTES);
+    $JUNIT['files'][$file_name]['xml'] = "<testcase classname='$suite' name='$escaped_test_name' time='$time'>\n";
 
 	if (is_array($type)) {
 		$output_type = $type[0] . 'ED';
