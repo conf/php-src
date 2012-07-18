@@ -135,16 +135,22 @@ mysqlnd_minfo_dump_loaded_plugins(void *pDest, void * buf TSRMLS_DC)
 /* }}} */
 
 /* {{{ mysqlnd_minfo_dump_api_plugins */
-static int
-mysqlnd_minfo_dump_api_plugins(void * pDest, void * buf TSRMLS_DC)
+static void
+mysqlnd_minfo_dump_api_plugins(smart_str * buffer TSRMLS_DC)
 {
-	smart_str * buffer = (smart_str *) buf;
-	MYSQLND_REVERSE_API * ext = *(MYSQLND_REVERSE_API **) pDest;
-	if (buffer->len) {
-		smart_str_appendc(buffer, ',');
+	HashTable *ht = mysqlnd_reverse_api_get_api_list(TSRMLS_C);
+	Bucket *p;
+
+	p = ht->pListHead;
+	while(p != NULL) {
+		MYSQLND_REVERSE_API * ext = *(MYSQLND_REVERSE_API **) p->pData;
+		if (buffer->len) {
+			smart_str_appendc(buffer, ',');
+		}
+		smart_str_appends(buffer, ext->module->name);
+
+		p = p->pListNext;
 	}
-	smart_str_appends(buffer, ext->module->name);
-	return ZEND_HASH_APPLY_KEEP;
 }
 /* }}} */
 
@@ -189,7 +195,7 @@ PHP_MINFO_FUNCTION(mysqlnd)
 		php_info_print_table_row(2, "Loaded plugins", tmp_str.c);
 		smart_str_free(&tmp_str);
 
-		zend_hash_apply_with_argument(mysqlnd_reverse_api_get_api_list(TSRMLS_C), mysqlnd_minfo_dump_api_plugins, &tmp_str TSRMLS_CC);
+		mysqlnd_minfo_dump_api_plugins(&tmp_str TSRMLS_CC);
 		smart_str_0(&tmp_str);
 		php_info_print_table_row(2, "API Extensions", tmp_str.c);
 		smart_str_free(&tmp_str);
@@ -215,6 +221,8 @@ static PHP_GINIT_FUNCTION(mysqlnd)
 	mysqlnd_globals->collect_memory_statistics = FALSE;
 	mysqlnd_globals->debug = NULL;	/* The actual string */
 	mysqlnd_globals->dbg = NULL;	/* The DBG object*/
+	mysqlnd_globals->trace_alloc_settings = NULL;
+	mysqlnd_globals->trace_alloc = NULL;
 	mysqlnd_globals->net_cmd_buffer_size = MYSQLND_NET_CMD_BUFFER_MIN_SIZE;
 	mysqlnd_globals->net_read_buffer_size = 32768;
 	mysqlnd_globals->net_read_timeout = 31536000;
@@ -247,6 +255,7 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("mysqlnd.collect_statistics",	"1", 	PHP_INI_ALL, OnUpdateBool,	collect_statistics, zend_mysqlnd_globals, mysqlnd_globals)
 	STD_PHP_INI_BOOLEAN("mysqlnd.collect_memory_statistics",	"0", 	PHP_INI_SYSTEM, OnUpdateBool,	collect_memory_statistics, zend_mysqlnd_globals, mysqlnd_globals)
 	STD_PHP_INI_ENTRY("mysqlnd.debug",					NULL, 	PHP_INI_SYSTEM, OnUpdateString,	debug, zend_mysqlnd_globals, mysqlnd_globals)
+	STD_PHP_INI_ENTRY("mysqlnd.trace_alloc",			NULL, 	PHP_INI_SYSTEM, OnUpdateString,	trace_alloc_settings, zend_mysqlnd_globals, mysqlnd_globals)
 	STD_PHP_INI_ENTRY("mysqlnd.net_cmd_buffer_size",	MYSQLND_NET_CMD_BUFFER_MIN_SIZE_STR,	PHP_INI_ALL,	OnUpdateNetCmdBufferSize,	net_cmd_buffer_size,	zend_mysqlnd_globals,		mysqlnd_globals)
 	STD_PHP_INI_ENTRY("mysqlnd.net_read_buffer_size",	"32768",PHP_INI_ALL,	OnUpdateLong,	net_read_buffer_size,	zend_mysqlnd_globals,		mysqlnd_globals)
 	STD_PHP_INI_ENTRY("mysqlnd.net_read_timeout",	"31536000",	PHP_INI_SYSTEM, OnUpdateLong,	net_read_timeout, zend_mysqlnd_globals, mysqlnd_globals)
@@ -300,11 +309,14 @@ static PHP_RINIT_FUNCTION(mysqlnd)
 		MYSQLND_G(dbg) = NULL;
 		if (trace_log_plugin) {
 			MYSQLND_DEBUG * dbg = trace_log_plugin->methods.trace_instance_init(mysqlnd_debug_std_no_trace_funcs TSRMLS_CC);
-			if (!dbg) {
+			MYSQLND_DEBUG * trace_alloc = trace_log_plugin->methods.trace_instance_init(NULL TSRMLS_CC);
+			if (!dbg || !trace_alloc) {
 				return FAILURE;
 			}
 			dbg->m->set_mode(dbg, MYSQLND_G(debug));
+			trace_alloc->m->set_mode(trace_alloc, MYSQLND_G(trace_alloc_settings));
 			MYSQLND_G(dbg) = dbg;
+			MYSQLND_G(trace_alloc) = trace_alloc;
 		}
 	}
 	return SUCCESS;
@@ -318,12 +330,18 @@ static PHP_RINIT_FUNCTION(mysqlnd)
  */
 static PHP_RSHUTDOWN_FUNCTION(mysqlnd)
 {
-	MYSQLND_DEBUG *dbg = MYSQLND_G(dbg);
+	MYSQLND_DEBUG * dbg = MYSQLND_G(dbg);
+	MYSQLND_DEBUG * trace_alloc = MYSQLND_G(trace_alloc);
 	DBG_ENTER("RSHUTDOWN");
 	if (dbg) {
 		dbg->m->close(dbg);
 		dbg->m->free_handle(dbg);
 		MYSQLND_G(dbg) = NULL;
+	}
+	if (trace_alloc) {
+		trace_alloc->m->close(trace_alloc);
+		trace_alloc->m->free_handle(trace_alloc);
+		MYSQLND_G(trace_alloc) = NULL;
 	}
 	return SUCCESS;
 }

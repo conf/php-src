@@ -131,8 +131,8 @@ static char *php_bin2hex(const unsigned char *old, const size_t oldlen, size_t *
 	register unsigned char *result = NULL;
 	size_t i, j;
 
-	result = (unsigned char *) safe_emalloc(oldlen * 2, sizeof(char), 1);
-
+	result = (unsigned char *) safe_emalloc(oldlen, 2 * sizeof(char), 1);
+	
 	for (i = j = 0; i < oldlen; i++) {
 		result[j++] = hexconvtab[old[i] >> 4];
 		result[j++] = hexconvtab[old[i] & 15];
@@ -264,6 +264,11 @@ PHP_FUNCTION(hex2bin)
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &data, &datalen) == FAILURE) {
 		return;
+	}
+
+	if (datalen % 2 != 0) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Hexadecimal input string must have an even length");
+		RETURN_FALSE;
 	}
 
 	result = php_hex2bin((unsigned char *)data, datalen, &newlen);
@@ -4024,13 +4029,12 @@ PHP_FUNCTION(nl2br)
 		RETURN_STRINGL(str, str_len, 1);
 	}
 
-	if (is_xhtml) {
-		new_length = str_len + repl_cnt * (sizeof("<br />") - 1);
-	} else {
-		new_length = str_len + repl_cnt * (sizeof("<br>") - 1);
-	}
+	{
+		size_t repl_len = is_xhtml ? (sizeof("<br />") - 1) : (sizeof("<br>") - 1);
 
-	tmp = target = emalloc(new_length + 1);
+		new_length = str_len + repl_cnt * repl_len;
+		tmp = target = safe_emalloc(repl_cnt, repl_len, str_len + 1);
+	}
 
 	while (str < end) {
 		switch (*str) {
@@ -5372,7 +5376,7 @@ PHP_FUNCTION(substr_compare)
 	if (!cs) {
 		RETURN_LONG(zend_binary_strncmp(s1 + offset, (s1_len - offset), s2, s2_len, cmp_len));
 	} else {
-		RETURN_LONG(zend_binary_strncasecmp(s1 + offset, (s1_len - offset), s2, s2_len, cmp_len));
+		RETURN_LONG(zend_binary_strncasecmp_l(s1 + offset, (s1_len - offset), s2, s2_len, cmp_len));
 	}
 }
 /* }}} */
