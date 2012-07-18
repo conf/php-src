@@ -1080,7 +1080,7 @@ static void php_error_cb(int type, const char *error_filename, const uint error_
 						PG(display_errors) == PHP_DISPLAY_ERRORS_STDERR
 					) {
 #ifdef PHP_WIN32
-						fprintf(stderr, "%s: %s in %s on line%d\n", error_type_str, buffer, error_filename, error_lineno);
+						fprintf(stderr, "%s: %s in %s on line %d\n", error_type_str, buffer, error_filename, error_lineno);
 						fflush(stderr);
 #else
 						fprintf(stderr, "%s: %s in %s on line %d\n", error_type_str, buffer, error_filename, error_lineno);
@@ -1740,21 +1740,21 @@ void php_request_shutdown(void *dummy)
 		}
 	} zend_end_try();
 
-	/* 4. Shutdown output layer (send the set HTTP headers, cleanup output handlers, etc.) */
-	zend_try {
-		php_output_deactivate(TSRMLS_C);
-	} zend_end_try();
-
-	/* 5. Reset max_execution_time (no longer executing php code after response sent) */
+	/* 4. Reset max_execution_time (no longer executing php code after response sent) */
 	zend_try {
 		zend_unset_timeout(TSRMLS_C);
 	} zend_end_try();
 
-	/* 6. Call all extensions RSHUTDOWN functions */
+	/* 5. Call all extensions RSHUTDOWN functions */
 	if (PG(modules_activated)) {
 		zend_deactivate_modules(TSRMLS_C);
 		php_free_shutdown_functions(TSRMLS_C);
 	}
+
+	/* 6. Shutdown output layer (send the set HTTP headers, cleanup output handlers, etc.) */
+	zend_try {
+		php_output_deactivate(TSRMLS_C);
+	} zend_end_try();
 
 	/* 7. Destroy super-globals */
 	zend_try {
