@@ -394,7 +394,7 @@ static zend_object_value spl_heap_object_new_ex(zend_class_entry *class_type, sp
 	ALLOC_INIT_ZVAL(intern->retval);
 
 	zend_object_std_init(&intern->std, class_type TSRMLS_CC);
-	zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+	zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_property_ctor, (void *) &tmp, sizeof(zval *));
 
 	intern->flags      = 0;
 	intern->fptr_cmp   = NULL;
@@ -950,7 +950,7 @@ static int spl_heap_it_get_current_key(zend_object_iterator *iter, char **str_ke
 {
 	spl_heap_it *iterator = (spl_heap_it *)iter;
 
-	*int_key = (ulong) iterator->object->heap->count;
+	*int_key = (ulong) iterator->object->heap->count - 1;
 	return HASH_KEY_IS_LONG;
 }
 /* }}} */

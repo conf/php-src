@@ -158,7 +158,7 @@ static zend_object_value spl_filesystem_object_new_ex(zend_class_entry *class_ty
 	if (obj) *obj = intern;
 
 	zend_object_std_init(&intern->std, class_type TSRMLS_CC);
-	zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+	zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_property_ctor, (void *) &tmp, sizeof(zval *));
 
 	retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, (zend_objects_free_object_storage_t) spl_filesystem_object_free_storage, NULL TSRMLS_CC);
 	retval.handlers = &spl_filesystem_object_handlers;
@@ -271,7 +271,18 @@ static void spl_filesystem_dir_open(spl_filesystem_object* intern, char *path TS
 
 static int spl_filesystem_file_open(spl_filesystem_object *intern, int use_include_path, int silent TSRMLS_DC) /* {{{ */
 {
+	zval  tmp;
+
 	intern->type = SPL_FS_FILE;
+
+	php_stat(intern->file_name, intern->file_name_len, FS_IS_DIR, &tmp TSRMLS_CC);
+	if (Z_LVAL(tmp)) {
+		intern->u.file.open_mode = NULL;
+		intern->file_name = NULL;
+		zend_throw_exception_ex(spl_ce_LogicException, 0 TSRMLS_CC, "Cannot use SplFileObject with directories");
+		return FAILURE;
+	}
+
 	intern->u.file.context = php_stream_context_from_zval(intern->u.file.zcontext, 0);
 	intern->u.file.stream = php_stream_open_wrapper_ex(intern->file_name, intern->u.file.open_mode, (use_include_path ? USE_PATH : 0) | ENFORCE_SAFE_MODE | REPORT_ERRORS, NULL, intern->u.file.context);
 
