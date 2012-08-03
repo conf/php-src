@@ -1,10 +1,33 @@
 PHP                                                                        NEWS
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-?? ??? 2012, PHP 5.4.6
+?? ??? 2012, PHP 5.4.7
 
 - Core:
+  . Fixed bug #62725 (Calling exit() in a shutdown function does not return
+    the exit value). (Laruence)
+
+- PDO:
+  . Fixed bug #62685 (Wrong return datatype in PDO::inTransaction()). (Laruence)
+
+- Reflection:
+  . Fixed bug #62715 (ReflectionParameter::isDefaultValueAvailable() wrong
+    result). (Laruence)
+
+?? ??? 2012, PHP 5.4.6
+
+- CLI Server:
+  . Implemented FR #62700 (have the console output 'Listening on 
+    http://localhost:8000'). (pascal.chevrel@free.fr)
+
+- Core:
+  . Fixed bug #62661 (Interactive php-cli crashes if include() is used in
+    auto_prepend_file). (Laruence)
+  . Fixed bug #62653: (unset($array[$float]) causes a crash). (Nikita Popov,
+    Laruence)
   . Fixed bug #62565 (Crashes due non-initialized internal properties_table).
     (Felipe)
+  . Fixed bug #60194 (--with-zend-multibyte and --enable-debug reports LEAK
+    with run-test.php). (Laruence)
 
 - CURL:
   . Fixed bug #62499 (curl_setopt($ch, CURLOPT_COOKIEFILE, "") returns false).
@@ -49,7 +72,7 @@ PHP                                                                        NEWS
   . Fixed bug #55544 (ob_gzhandler always conflicts with
     zlib.output_compression). (Laruence)
 
-?? ??? 2012, PHP 5.4.5
+19 Jul 2012, PHP 5.4.5
 
 - Core:
   . Fixed bug #62443 (Crypt SHA256/512 Segfaults With Malformed 
