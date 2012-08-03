@@ -2,12 +2,25 @@ PHP                                                                        NEWS
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 ?? ??? 2012, PHP 5.3.16
 
+- Core:
+  . Fixed bug #62716 (munmap() is called with the incorrect length). 
+    (slangley@google.com)
+  . Fixed bug #60194 (--with-zend-multibyte and --enable-debug reports LEAK
+    with run-test.php). (Laruence)
+
 - CURL:
   . Fixed bug #62499 (curl_setopt($ch, CURLOPT_COOKIEFILE, "") returns false).
     (r.hampartsumyan@gmail.com, Laruence)
 
 - DateTime:
-  . Fixed Bug #62500 (Segfault in DateInterval class when extended). (Laruence)
+  . Fixed bug #62500 (Segfault in DateInterval class when extended). (Laruence)
+
+- PDO:
+  . Fixed bug #62685 (Wrong return datatype in PDO::inTransaction()). (Laruence)
+
+- Reflection:
+  . Fixed bug #62715 (ReflectionParameter::isDefaultValueAvailable() wrong
+    result). (Laruence)
 
 - SPL:
   . Fixed bug #62616 (ArrayIterator::count() from IteratorIterator instance
