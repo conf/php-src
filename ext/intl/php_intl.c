@@ -96,6 +96,7 @@
 #include "common/common_enum.h"
 
 #include <unicode/uloc.h>
+#include <unicode/uclean.h>
 #include <ext/standard/info.h>
 
 #include "php_ini.h"
@@ -852,7 +853,6 @@ zend_function_entry intl_functions[] = {
 };
 /* }}} */
 
-
 /* {{{ INI Settings */
 PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY(LOCALE_INI_NAME, NULL, PHP_INI_ALL, OnUpdateStringUnempty, default_locale, zend_intl_globals, intl_globals)
@@ -860,7 +860,6 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_ENTRY("intl.use_exceptions", "0", PHP_INI_ALL, OnUpdateBool, use_exceptions, zend_intl_globals, intl_globals)
 PHP_INI_END()
 /* }}} */
-
 
 static PHP_GINIT_FUNCTION(intl);
 
@@ -987,21 +986,24 @@ PHP_MINIT_FUNCTION( intl )
 	/* Global error handling. */
 	intl_error_init( NULL TSRMLS_CC );
 
-	/* Set the default_locale value */
-	if( INTL_G(default_locale) == NULL ) {
-		INTL_G(default_locale) = pestrdup(uloc_getDefault(), 1) ;
-	}
-
 	return SUCCESS;
 }
 /* }}} */
+
+#define EXPLICIT_CLEANUP_ENV_VAR "INTL_EXPLICIT_CLEANUP"
 
 /* {{{ PHP_MSHUTDOWN_FUNCTION
  */
 PHP_MSHUTDOWN_FUNCTION( intl )
 {
+	const char *cleanup;
     /* For the default locale php.ini setting */
     UNREGISTER_INI_ENTRIES();
+
+	cleanup = getenv(EXPLICIT_CLEANUP_ENV_VAR);
+    if (cleanup != NULL && !(cleanup[0] == '0' && cleanup[1] == '\0')) {
+		u_cleanup();
+    }
 
     return SUCCESS;
 }
@@ -1011,10 +1013,6 @@ PHP_MSHUTDOWN_FUNCTION( intl )
  */
 PHP_RINIT_FUNCTION( intl )
 {
-	/* Set the default_locale value */
-    if( INTL_G(default_locale) == NULL ) {
-        INTL_G(default_locale) = pestrdup(uloc_getDefault(), 1) ;
-    }
 	return SUCCESS;
 }
 /* }}} */
