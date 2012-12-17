@@ -22,7 +22,7 @@
 #ifndef ZEND_H
 #define ZEND_H
 
-#define ZEND_VERSION "2.4.0"
+#define ZEND_VERSION "2.6.0-dev"
 
 #define ZEND_ENGINE_2
 
@@ -225,6 +225,7 @@ char *alloca ();
 #define ZEND_FILE_LINE_EMPTY_CC			, ZEND_FILE_LINE_EMPTY_C
 #define ZEND_FILE_LINE_ORIG_RELAY_C		__zend_orig_filename, __zend_orig_lineno
 #define ZEND_FILE_LINE_ORIG_RELAY_CC	, ZEND_FILE_LINE_ORIG_RELAY_C
+#define ZEND_ASSERT(c)					assert(c)
 #else
 #define ZEND_FILE_LINE_D
 #define ZEND_FILE_LINE_DC
@@ -238,6 +239,7 @@ char *alloca ();
 #define ZEND_FILE_LINE_EMPTY_CC
 #define ZEND_FILE_LINE_ORIG_RELAY_C
 #define ZEND_FILE_LINE_ORIG_RELAY_CC
+#define ZEND_ASSERT(c)
 #endif	/* ZEND_DEBUG */
 
 #ifdef ZTS
@@ -276,10 +278,10 @@ static const char long_min_digits[] = "9223372036854775808";
 
 #define MAX_LENGTH_OF_DOUBLE 32
 
-#undef SUCCESS
-#undef FAILURE
-#define SUCCESS 0
-#define FAILURE -1				/* this MUST stay a negative number, or it may affect functions! */
+typedef enum {
+  SUCCESS =  0,
+  FAILURE = -1,		/* this MUST stay a negative number, or it may affect functions! */
+} ZEND_RESULT_CODE;
 
 #include "zend_hash.h"
 #include "zend_ts_hash.h"
