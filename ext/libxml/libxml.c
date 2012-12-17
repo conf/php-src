@@ -860,7 +860,6 @@ static PHP_MSHUTDOWN_FUNCTION(libxml)
 {
 	if (!_php_libxml_per_request_initialization) {
 		xmlSetGenericErrorFunc(NULL, NULL);
-		xmlSetStructuredErrorFunc(NULL, NULL);
 
 		xmlParserInputBufferCreateFilenameDefault(NULL);
 		xmlOutputBufferCreateFilenameDefault(NULL);
@@ -876,11 +875,11 @@ static int php_libxml_post_deactivate()
 	/* reset libxml generic error handling */
 	if (_php_libxml_per_request_initialization) {
 		xmlSetGenericErrorFunc(NULL, NULL);
-		xmlSetStructuredErrorFunc(NULL, NULL);
 
 		xmlParserInputBufferCreateFilenameDefault(NULL);
 		xmlOutputBufferCreateFilenameDefault(NULL);
 	}
+	xmlSetStructuredErrorFunc(NULL, NULL);
 
 	if (LIBXML(stream_context)) {
 		/* the steam_context resource will be released by resource list destructor */
@@ -918,7 +917,7 @@ static PHP_FUNCTION(libxml_set_streams_context)
 {
 	zval *arg;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &arg) == FAILURE) {
 		return;
 	}
 	if (LIBXML(stream_context)) {

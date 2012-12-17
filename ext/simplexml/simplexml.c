@@ -1081,15 +1081,9 @@ static HashTable * sxe_get_prop_hash(zval *object, int is_debug TSRMLS_DC) /* {{
 		zend_hash_init(rv, 0, NULL, ZVAL_PTR_DTOR, 0);
 	}
 	else if (sxe->properties) {
-		if (GC_G(gc_active)) {
-			return sxe->properties;
-		}
 		zend_hash_clean(sxe->properties);
 		rv = sxe->properties;
 	} else {
-		if (GC_G(gc_active)) {
-			return NULL;
-		}
 		ALLOC_HASHTABLE(rv);
 		zend_hash_init(rv, 0, NULL, ZVAL_PTR_DTOR, 0);
 		sxe->properties = rv;
@@ -1198,6 +1192,16 @@ next_iter:
 	}
 
 	return rv;
+}
+/* }}} */
+
+static HashTable * sxe_get_gc(zval *object, zval ***table, int *n TSRMLS_DC) /* {{{ */ {
+	php_sxe_object  *sxe;
+	sxe = php_sxe_fetch_object(object TSRMLS_CC);
+	
+	*table = NULL;
+	*n = 0;
+	return sxe->properties;
 }
 /* }}} */
 
@@ -1417,7 +1421,11 @@ SXE_METHOD(asXML)
 
 			xmlNodeDumpOutput(outbuf, (xmlDocPtr) sxe->document->ptr, node, 0, 0, ((xmlDocPtr) sxe->document->ptr)->encoding);
 			xmlOutputBufferFlush(outbuf);
+#ifdef LIBXML2_NEW_BUFFER
+			RETVAL_STRINGL((char *)xmlOutputBufferGetContent(outbuf), xmlOutputBufferGetSize(outbuf), 1);
+#else
 			RETVAL_STRINGL((char *)outbuf->buffer->content, outbuf->buffer->use, 1);
+#endif
 			xmlOutputBufferClose(outbuf);
 		}
 	} else {
@@ -1962,7 +1970,9 @@ static zend_object_handlers sxe_object_handlers = { /* {{{ */
 	sxe_objects_compare,
 	sxe_object_cast,
 	sxe_count_elements,
-	sxe_get_debug_info
+	sxe_get_debug_info,
+	NULL,
+	sxe_get_gc
 };
 /* }}} */
 
