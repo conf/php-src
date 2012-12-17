@@ -1,10 +1,185 @@
 PHP                                                                        NEWS
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-?? ??? 2012, PHP 5.3.16
+?? ??? 2013, PHP 5.3.21
+
+- Zend Engine:
+  . Fixed bug #63762 (Sigsegv when Exception::$trace is changed by user).
+    (Johannes)
+
+?? ??? 2012, PHP 5.3.20
+
+#### ADD NEWS TO 5.3.21 ONLY ####
+
+- Zend Engine:
+  . Fixed bug #63635 (Segfault in gc_collect_cycles). (Dmitry)
+  . Fixed bug #63512 (parse_ini_file() with INI_SCANNER_RAW removes quotes 
+    from value). (Pierrick)
+  . Fixed bug #63468 (wrong called method as callback with inheritance).
+    (Laruence)
 
 - Core:
+  . Fixed bug #63451 (config.guess file does not have AIX 7 defined, 
+    shared objects are not created). (kemcline at au1 dot ibm dot com)
+  . Fixed bug #63377 (Segfault on output buffer).
+    (miau dot jp at gmail dot com, Laruence)
+
+- Apache2 Handler SAPI:
+  . Enabled Apache 2.4 configure option for Windows (Pierre, Anatoliy)
+
+- Date:
+  . Fixed bug #63435 (Datetime::format('u') sometimes wrong by 1 microsecond).
+    (Remi)
+
+- Fileinfo:
+  . Fixed bug #63248 (Load multiple magic files from a directory under Windows).
+    (Anatoliy)
+  . Fixed bug #63590 (Different results in TS and NTS under Windows).
+    (Anatoliy)
+
+- FPM:
+  . Fixed bug #63581 (Possible null dereference and buffer overflow). (Remi)
+
+- Imap:
+  . Fixed bug #63126 (DISABLE_AUTHENTICATOR ignores array). (Remi)
+
+- MySQLnd:
+  . Fixed bug #63398 (Segfault when polling closed link). (Laruence)
+
+- Reflection:
+  . Fixed Bug #63614 (Fatal error on Reflection). (Laruence)
+
+- SOAP
+  . Fixed bug #63271 (SOAP wsdl cache is not enabled after initial requests).
+    (John Jawed, Dmitry)
+
+22 Nov 2012, PHP 5.3.19
+
+- Core
+  . Fixed bug #63241 (PHP fails to open Windows deduplicated files).
+    (daniel dot stelter-gliese at innogames dot de)
+  . Fixed bug #62444 (Handle leak in is_readable on windows). 
+    (krazyest at seznam dot cz)
+
+- Libxml
+  . Fixed bug #63389 (Missing context check on libxml_set_streams_context()
+    causes memleak). (Laruence)
+
+- Mbstring:
+  . Fixed bug #63447 (max_input_vars doesn't filter variables when
+    mbstring.encoding_translation = On). (Laruence)
+
+- MySQL:
+  . Fixed compilation failure on mixed 32/64 bit systems. (Andrey)
+
+- OCI8:
+  . Fixed bug #63265 (Add ORA-00028 to the PHP_OCI_HANDLE_ERROR macro)
+    (Chris Jones)
+
+- PCRE:
+  . Fixed bug #63055 (Segfault in zend_gc with SF2 testsuite).
+    (Dmitry, Laruence)
+  . Fixed bug #63284 (Upgrade PCRE to 8.31). (Anatoliy)
+
+- PDO:
+  . Fixed bug #63235 (buffer overflow in use of SQLGetDiagRec).
+    (Martin Osvald, Remi)
+
+- PDO_pgsql:
+  . Fixed bug #62593 (Emulate prepares behave strangely with PARAM_BOOL).
+    (Will Fitch)
+
+- Streams:
+  . Fixed bug #63240 (stream_get_line() return contains delimiter string).
+    (Tjerk, Gustavo)
+
+- Phar:
+  . Fixed bug #63297 (Phar fails to write an openssl based signature).
+    (Anatoliy)
+
+18 Oct 2012, PHP 5.3.18
+
+- Core:
+  . Fixed bug #63111 (is_callable() lies for abstract static method). (Dmitry)
+  . Fixed bug #63093 (Segfault while load extension failed in zts-build).
+    (Laruence)
+  . Fixed bug #62976 (Notice: could not be converted to int when comparing
+    some builtin classes). (Laruence)
+  . Fixed bug #61767 (Shutdown functions not called in certain error
+    situation). (Dmitry)
+  . Fixed bug #61442 (exception threw in __autoload can not be catched).
+    (Laruence)
+  . Fixed bug #60909 (custom error handler throwing Exception + fatal error
+    = no shutdown function). (Dmitry)
+
+- cURL:
+  . Fixed bug #62085 (file_get_contents a remote file by Curl wrapper will
+    cause cpu Soaring). (Pierrick)
+
+- FPM:
+  . Fixed bug #62954 (startup problems fpm / php-fpm). (fat)
+  . Fixed bug #62886 (PHP-FPM may segfault/hang on startup). (fat)
+  . Fixed bug #63085 (Systemd integration and daemonize). (remi, fat)
+  . Fixed bug #62947 (Unneccesary warnings on FPM). (fat)
+  . Fixed bug #62887 (Only /status?plain&full gives "last request cpu"). (fat)
+  . Fixed bug #62216 (Add PID to php-fpm init.d script). (fat)
+
+- Intl:
+  . Fix bug #62915 (defective cloning in several intl classes). (Gustavo)
+
+- OCI8:
+  . Fixed bug #60901 (Improve "tail" syntax for AIX installation) (Chris Jones)
+
+- SOAP
+  . Fixed bug #50997 (SOAP Error when trying to submit 2nd Element of a choice).
+    (Dmitry)
+
+- SPL:
+  . Bug #62987 (Assigning to ArrayObject[null][something] overrides all 
+    undefined variables). (Laruence)
+
+13 Sep 2012, PHP 5.3.17
+
+- Core:
+  . Fixed bug (segfault while build with zts and GOTO vm-kind). (Laruence)
+  . Fixed bug #62955 (Only one directive is loaded from "Per Directory Values" 
+    Windows registry). (aserbulov at parallels dot com)
+  . Fixed bug #62763 (register_shutdown_function and extending class). 
+    (Laruence)
+  . Fixed bug #62744 (dangling pointers made by zend_disable_class). (Laruence)
   . Fixed bug #62716 (munmap() is called with the incorrect length). 
     (slangley@google.com)
+  . Fixed bug ##62460 (php binaries installed as binary.dSYM). (Reeze Xia)
+
+- CURL:
+  . Fixed bug #62839 (curl_copy_handle segfault with CURLOPT_FILE). (Pierrick)
+   . Fixed bug #62499 (curl_setopt($ch, CURLOPT_COOKIEFILE, "") returns false).
+     (r.hampartsumyan@gmail.com, Laruence)
+  
+ - DateTime:
+   . Fixed bug #62852 (Unserialize invalid DateTime causes crash).
+     (reeze.xia@gmail.com)
+   . Fixed bug #62500 (Segfault in DateInterval class when extended). (Laruence)
+
+- MySQLnd:
+  . Fixed bug #62885 (mysqli_poll - Segmentation fault). (Laruence)
+
+- PDO:
+  . Fixed bug #62685 (Wrong return datatype in PDO::inTransaction()). (Laruence)
+
+- Session:
+  . Fixed bug (segfault due to retval is not initialized). (Laruence)
+
+- SPL:
+  . Fixed bug #62904 (Crash when cloning an object which inherits SplFixedArray)
+    (Laruence)
+
+- Enchant:
+  . Fixed bug #62838 (enchant_dict_quick_check() destroys zval, but fails to 
+  initialize it). (Tony, Mateusz Goik).
+
+16 Aug 2012, PHP 5.3.16
+
+- Core:
   . Fixed bug #60194 (--with-zend-multibyte and --enable-debug reports LEAK
     with run-test.php). (Laruence)
 
@@ -13,10 +188,7 @@ PHP                                                                        NEWS
     (r.hampartsumyan@gmail.com, Laruence)
 
 - DateTime:
-  . Fixed bug #62500 (Segfault in DateInterval class when extended). (Laruence)
-
-- PDO:
-  . Fixed bug #62685 (Wrong return datatype in PDO::inTransaction()). (Laruence)
+  . Fixed Bug #62500 (Segfault in DateInterval class when extended). (Laruence)
 
 - Reflection:
   . Fixed bug #62715 (ReflectionParameter::isDefaultValueAvailable() wrong
@@ -25,6 +197,7 @@ PHP                                                                        NEWS
 - SPL:
   . Fixed bug #62616 (ArrayIterator::count() from IteratorIterator instance
     gives Segmentation fault). (Laruence, Gustavo)
+
 
 19 Jul 2012, PHP 5.3.15
 
@@ -1278,6 +1451,7 @@ PHP                                                                        NEWS
 
 - GD extension:
   . Fixed bug #53492 (fix crash if anti-aliasing steps are invalid). (Pierre)
+  . Fixed potential memory leak on a png error (Rasmus, Paul Saab)
 
 - GMP extension:
   . Fixed bug #52906 (gmp_mod returns negative result when non-negative is 
