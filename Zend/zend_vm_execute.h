@@ -383,7 +383,7 @@ ZEND_API void zend_execute(zend_op_array *op_array TSRMLS_DC)
 
 static int ZEND_FASTCALL zend_leave_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS)
 {
-	zend_bool nested;
+	zend_bool nested = EX(nested);
 	zend_op_array *op_array = EX(op_array);
 
 	EG(current_execute_data) = EX(prev_execute_data);
@@ -392,13 +392,11 @@ static int ZEND_FASTCALL zend_leave_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS)
 		i_free_compiled_variables(execute_data);
 	}
 
+	zend_vm_stack_free((char*)execute_data - (ZEND_MM_ALIGNED_SIZE(sizeof(temp_variable)) * op_array->T) TSRMLS_CC);
+
 	if ((op_array->fn_flags & ZEND_ACC_CLOSURE) && op_array->prototype) {
 		zval_ptr_dtor((zval**)&op_array->prototype);
 	}
-
-	nested = EX(nested);
-
-	zend_vm_stack_free((char*)execute_data - (ZEND_MM_ALIGNED_SIZE(sizeof(temp_variable)) * op_array->T) TSRMLS_CC);
 
 	if (nested) {
 		execute_data = EG(current_execute_data);
@@ -4183,8 +4181,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_CONST_CONST_HANDLER(ZEND_OPCODE_HANDLE
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -4879,8 +4876,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_CONST_TMP_HANDLER(ZEND_OPCODE_HANDLER_
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -5901,8 +5897,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_CONST_VAR_HANDLER(ZEND_OPCODE_HANDLER_
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -6616,8 +6611,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_CONST_UNUSED_HANDLER(ZEND_OPCODE_HANDL
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -7371,8 +7365,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_CONST_CV_HANDLER(ZEND_OPCODE_HANDLER_A
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -9417,8 +9410,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_TMP_CONST_HANDLER(ZEND_OPCODE_HANDLER_
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -10113,8 +10105,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_TMP_TMP_HANDLER(ZEND_OPCODE_HANDLER_AR
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -11135,8 +11126,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_TMP_VAR_HANDLER(ZEND_OPCODE_HANDLER_AR
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -11714,8 +11704,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_TMP_UNUSED_HANDLER(ZEND_OPCODE_HANDLER
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -12407,8 +12396,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_TMP_CV_HANDLER(ZEND_OPCODE_HANDLER_ARG
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -16315,8 +16303,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_VAR_CONST_HANDLER(ZEND_OPCODE_HANDLER_
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -18403,8 +18390,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_VAR_TMP_HANDLER(ZEND_OPCODE_HANDLER_AR
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -20872,8 +20858,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_VAR_VAR_HANDLER(ZEND_OPCODE_HANDLER_AR
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -22014,8 +21999,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_VAR_UNUSED_HANDLER(ZEND_OPCODE_HANDLER
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -24151,8 +24135,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_VAR_CV_HANDLER(ZEND_OPCODE_HANDLER_ARG
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -25642,8 +25625,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_UNUSED_CONST_HANDLER(ZEND_OPCODE_HANDL
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -26957,8 +26939,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_UNUSED_TMP_HANDLER(ZEND_OPCODE_HANDLER
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -28273,8 +28254,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_UNUSED_VAR_HANDLER(ZEND_OPCODE_HANDLER
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -28696,8 +28676,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_UNUSED_UNUSED_HANDLER(ZEND_OPCODE_HAND
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -30008,8 +29987,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_UNUSED_CV_HANDLER(ZEND_OPCODE_HANDLER_
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -33513,8 +33491,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_CV_CONST_HANDLER(ZEND_OPCODE_HANDLER_A
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -35468,8 +35445,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_CV_TMP_HANDLER(ZEND_OPCODE_HANDLER_ARG
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -37803,8 +37779,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_CV_VAR_HANDLER(ZEND_OPCODE_HANDLER_ARG
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -38802,8 +38777,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_CV_UNUSED_HANDLER(ZEND_OPCODE_HANDLER_
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
@@ -40805,8 +40779,7 @@ static int ZEND_FASTCALL  ZEND_YIELD_SPEC_CV_CV_HANDLER(ZEND_OPCODE_HANDLER_ARGS
 	generator->send_target = &EX_T(opline->result.var);
 
 	/* Initialize the sent value to NULL */
-	Z_ADDREF(EG(uninitialized_zval));
-	AI_SET_PTR(&EX_T(opline->result.var), &EG(uninitialized_zval));
+	EX_T(opline->result.var).tmp_var = EG(uninitialized_zval);
 
 	/* We increment to the next op, so we are at the correct position when the
 	 * generator is resumed. */
