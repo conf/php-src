@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | PHP Version 5                                                        |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1997-2012 The PHP Group                                |
+   | Copyright (c) 1997-2013 The PHP Group                                |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -1298,7 +1298,8 @@ static void reflection_method_factory(zend_class_entry *ce, zend_function *metho
 	}
 	MAKE_STD_ZVAL(name);
 	MAKE_STD_ZVAL(classname);
-	ZVAL_STRING(name, method->common.function_name, 1);
+	ZVAL_STRING(name, (method->common.scope && method->common.scope->trait_aliases)?
+			zend_resolve_method_name(ce, method) : method->common.function_name, 1);
 	ZVAL_STRINGL(classname, method->common.scope->name, method->common.scope->name_length, 1);
 	reflection_instantiate(reflection_method_ptr, object TSRMLS_CC);
 	intern = (reflection_object *) zend_object_store_get_object(object TSRMLS_CC);

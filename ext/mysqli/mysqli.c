@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2012 The PHP Group                                |
+  | Copyright (c) 1997-2013 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -838,6 +838,9 @@ PHP_MINIT_FUNCTION(mysqli)
 	REGISTER_LONG_CONSTANT("MYSQLI_REFRESH_BACKUP_LOG", REFRESH_BACKUP_LOG, CONST_CS | CONST_PERSISTENT);
 #endif
 
+#if MYSQL_VERSION_ID >= 50611 || defined(MYSQLI_USE_MYSQLND)
+	REGISTER_LONG_CONSTANT("MYSQLI_OPT_CAN_HANDLE_EXPIRED_PASSWORDS", MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, CONST_CS | CONST_PERSISTENT);
+#endif
 
 #ifdef MYSQLI_USE_MYSQLND
 	mysqlnd_reverse_api_register_api(&mysqli_reverse_api TSRMLS_CC);
@@ -1254,7 +1257,7 @@ void php_mysqli_fetch_into_hash(INTERNAL_FUNCTION_PARAMETERS, int override_flags
 
 	php_mysqli_fetch_into_hash_aux(return_value, result, fetchtype TSRMLS_CC);
 
-	if (into_object && Z_TYPE_P(return_value) != IS_NULL) {
+	if (into_object && Z_TYPE_P(return_value) == IS_ARRAY) {
 		zval dataset = *return_value;
 		zend_fcall_info fci;
 		zend_fcall_info_cache fcc;

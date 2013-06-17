@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2012 The PHP Group                                |
+  | Copyright (c) 1997-2013 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -479,10 +479,40 @@ ZEND_INI_MH(OnUpdateCacheMode)
 	return SUCCESS;
 }
 
+static PHP_INI_MH(OnUpdateCacheDir)
+{
+	/* Only do the open_basedir check at runtime */
+	if (stage == PHP_INI_STAGE_RUNTIME || stage == PHP_INI_STAGE_HTACCESS) {
+		char *p;
+
+		if (memchr(new_value, '\0', new_value_length) != NULL) {
+			return FAILURE;
+		}
+
+		/* we do not use zend_memrchr() since path can contain ; itself */
+		if ((p = strchr(new_value, ';'))) {
+			char *p2;
+			p++;
+			if ((p2 = strchr(p, ';'))) {
+				p = p2 + 1;
+			}
+		} else {
+			p = new_value;
+		}
+
+		if (PG(open_basedir) && *p && php_check_open_basedir(p TSRMLS_CC)) {
+			return FAILURE;
+		}
+	}
+
+	OnUpdateString(entry, new_value, new_value_length, mh_arg1, mh_arg2, mh_arg3, stage TSRMLS_CC);
+	return SUCCESS;
+}
+
 PHP_INI_BEGIN()
 STD_PHP_INI_ENTRY("soap.wsdl_cache_enabled",     "1", PHP_INI_ALL, OnUpdateBool,
                   cache_enabled, zend_soap_globals, soap_globals)
-STD_PHP_INI_ENTRY("soap.wsdl_cache_dir",         "/tmp", PHP_INI_ALL, OnUpdateString,
+STD_PHP_INI_ENTRY("soap.wsdl_cache_dir",         "/tmp", PHP_INI_ALL, OnUpdateCacheDir,
                   cache_dir, zend_soap_globals, soap_globals)
 STD_PHP_INI_ENTRY("soap.wsdl_cache_ttl",         "86400", PHP_INI_ALL, OnUpdateLong,
                   cache_ttl, zend_soap_globals, soap_globals)
@@ -1639,7 +1669,7 @@ PHP_METHOD(SoapServer, handle)
 			}
 		}
 #endif
-		/* If new session or something wierd happned */
+		/* If new session or something weird happned */
 		if (soap_obj == NULL) {
 			zval *tmp_soap;
 
@@ -3879,7 +3909,7 @@ static xmlDocPtr serialize_response_call(sdlFunctionPtr function, char *function
 
 		if (version == SOAP_1_1) {
 			if (zend_hash_find(prop, "faultcode", sizeof("faultcode"), (void**)&tmp) == SUCCESS) {
-				int new_len;
+				size_t new_len;
 				xmlNodePtr node = xmlNewNode(NULL, BAD_CAST("faultcode"));
 				char *str = php_escape_html_entities((unsigned char*)Z_STRVAL_PP(tmp), Z_STRLEN_PP(tmp), &new_len, 0, 0, NULL TSRMLS_CC);
 				xmlAddChild(param, node);
@@ -3889,7 +3919,7 @@ static xmlDocPtr serialize_response_call(sdlFunctionPtr function, char *function
 					xmlNodeSetContent(node, code);
 					xmlFree(code);
 				} else {	
-					xmlNodeSetContentLen(node, BAD_CAST(str), new_len);
+					xmlNodeSetContentLen(node, BAD_CAST(str), (int)new_len);
 				}
 				efree(str);
 			}
@@ -3904,7 +3934,7 @@ static xmlDocPtr serialize_response_call(sdlFunctionPtr function, char *function
 			detail_name = "detail";
 		} else {
 			if (zend_hash_find(prop, "faultcode", sizeof("faultcode"), (void**)&tmp) == SUCCESS) {
-				int new_len;
+				size_t new_len;
 				xmlNodePtr node = xmlNewChild(param, ns, BAD_CAST("Code"), NULL);
 				char *str = php_escape_html_entities((unsigned char*)Z_STRVAL_PP(tmp), Z_STRLEN_PP(tmp), &new_len, 0, 0, NULL TSRMLS_CC);
 				node = xmlNewChild(node, ns, BAD_CAST("Value"), NULL);
@@ -3914,7 +3944,7 @@ static xmlDocPtr serialize_response_call(sdlFunctionPtr function, char *function
 					xmlNodeSetContent(node, code);
 					xmlFree(code);
 				} else {	
-					xmlNodeSetContentLen(node, BAD_CAST(str), new_len);
+					xmlNodeSetContentLen(node, BAD_CAST(str), (int)new_len);
 				}
 				efree(str);
 			}

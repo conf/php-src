@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | PHP Version 5                                                        |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1997-2012 The PHP Group                                |
+   | Copyright (c) 1997-2013 The PHP Group                                |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -290,7 +290,7 @@ static void php_ini_parser_cb(zval *arg1, zval *arg2, zval *arg3, int callback_t
 					is_special_section = 1;
 					has_per_dir_config = 1;
 
-					/* make the path lowercase on Windows, for case insensitivty. Does nothign for other platforms */
+					/* make the path lowercase on Windows, for case insensitivity. Does nothing for other platforms */
 					TRANSLATE_SLASHES_LOWER(key);
 
 				/* HOST sections */

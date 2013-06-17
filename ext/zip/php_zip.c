@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2012 The PHP Group                                |
+  | Copyright (c) 1997-2013 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -28,6 +28,7 @@
 #include "ext/standard/file.h"
 #include "ext/standard/php_string.h"
 #include "ext/pcre/php_pcre.h"
+#include "ext/standard/php_filestat.h"
 #include "php_zip.h"
 #include "lib/zip.h"
 #include "lib/zipint.h"
@@ -300,6 +301,7 @@ static int php_zip_add_file(struct zip *za, const char *filename, size_t filenam
 	struct zip_source *zs;
 	int cur_idx;
 	char resolved_path[MAXPATHLEN];
+	zval exists_flag;
 
 
 	if (ZIP_OPENBASEDIR_CHECKPATH(filename)) {
@@ -307,6 +309,11 @@ static int php_zip_add_file(struct zip *za, const char *filename, size_t filenam
 	}
 
 	if (!expand_filepath(filename, resolved_path TSRMLS_CC)) {
+		return -1;
+	}
+
+	php_stat(resolved_path, strlen(resolved_path), FS_EXISTS, &exists_flag TSRMLS_CC);
+	if (!Z_BVAL(exists_flag)) {
 		return -1;
 	}
 

@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | Zend Engine                                                          |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1998-2012 Zend Technologies Ltd. (http://www.zend.com) |
+   | Copyright (c) 1998-2013 Zend Technologies Ltd. (http://www.zend.com) |
    +----------------------------------------------------------------------+
    | This source file is subject to version 2.00 of the Zend license,     |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -79,7 +79,8 @@ static zend_always_inline long zend_dval_to_lval(double d)
 #else
 static zend_always_inline long zend_dval_to_lval(double d)
 {
-	if (d > LONG_MAX) {
+	/* >= as (double)LONG_MAX is outside signed range */
+	if (d >= LONG_MAX) {
 		return (long)(unsigned long) d;
 	}
 	return (long) d;

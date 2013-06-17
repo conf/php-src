@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | PHP Version 5                                                        |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1997-2012 The PHP Group                                |
+   | Copyright (c) 1997-2013 The PHP Group                                |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -114,12 +114,16 @@ static PHP_GINIT_FUNCTION(sockets);
 
 static char *php_strerror(int error TSRMLS_DC);
 
+#define PHP_SOCKET_ERROR(socket, msg, errn) \
+		do { \
+			int _err = (errn); /* save value to avoid repeated calls to WSAGetLastError() on Windows */ \
+			(socket)->error = _err; \
+			SOCKETS_G(last_error) = _err; \
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s [%d]: %s", msg, _err, php_strerror(_err TSRMLS_CC)); \
+		} while (0)
+
 #define PHP_NORMAL_READ 0x0001
 #define PHP_BINARY_READ 0x0002
-
-#define PHP_SOCKET_ERROR(socket,msg,errn)	socket->error = errn;	\
-						SOCKETS_G(last_error) = errn; \
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s [%d]: %s", msg, errn, php_strerror(errn TSRMLS_CC))
 
 static int le_socket;
 #define le_socket_name php_sockets_le_socket_name
@@ -278,6 +282,41 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_socket_import_stream, 0, 0, 1)
 	ZEND_ARG_INFO(0, stream)
 ZEND_END_ARG_INFO()
 /* }}} */
+
+PHP_MINIT_FUNCTION(sockets);
+PHP_MINFO_FUNCTION(sockets);
+PHP_RSHUTDOWN_FUNCTION(sockets);
+
+PHP_FUNCTION(socket_select);
+PHP_FUNCTION(socket_create_listen);
+#ifdef HAVE_SOCKETPAIR
+PHP_FUNCTION(socket_create_pair);
+#endif
+PHP_FUNCTION(socket_accept);
+PHP_FUNCTION(socket_set_nonblock);
+PHP_FUNCTION(socket_set_block);
+PHP_FUNCTION(socket_listen);
+PHP_FUNCTION(socket_close);
+PHP_FUNCTION(socket_write);
+PHP_FUNCTION(socket_read);
+PHP_FUNCTION(socket_getsockname);
+PHP_FUNCTION(socket_getpeername);
+PHP_FUNCTION(socket_create);
+PHP_FUNCTION(socket_connect);
+PHP_FUNCTION(socket_strerror);
+PHP_FUNCTION(socket_bind);
+PHP_FUNCTION(socket_recv);
+PHP_FUNCTION(socket_send);
+PHP_FUNCTION(socket_recvfrom);
+PHP_FUNCTION(socket_sendto);
+PHP_FUNCTION(socket_get_option);
+PHP_FUNCTION(socket_set_option);
+#ifdef HAVE_SHUTDOWN
+PHP_FUNCTION(socket_shutdown);
+#endif
+PHP_FUNCTION(socket_last_error);
+PHP_FUNCTION(socket_clear_error);
+PHP_FUNCTION(socket_import_stream);
 
 /* {{{ sockets_functions[]
  */
@@ -1095,7 +1134,7 @@ PHP_FUNCTION(socket_set_nonblock)
 		if (stream != NULL) {
 			if (php_stream_set_option(stream, PHP_STREAM_OPTION_BLOCKING, 0,
 					NULL) != -1) {
-				php_sock->blocking = 1;
+				php_sock->blocking = 0;
 				RETURN_TRUE;
 			}
 		}
@@ -1783,8 +1822,8 @@ PHP_FUNCTION(socket_recvfrom)
 			retval = recvfrom(php_sock->bsd_socket, recv_buf, arg3, arg4, (struct sockaddr *)&s_un, (socklen_t *)&slen);
 
 			if (retval < 0) {
-				efree(recv_buf);
 				PHP_SOCKET_ERROR(php_sock, "unable to recvfrom", errno);
+				efree(recv_buf);
 				RETURN_FALSE;
 			}
 
@@ -1808,8 +1847,8 @@ PHP_FUNCTION(socket_recvfrom)
 			retval = recvfrom(php_sock->bsd_socket, recv_buf, arg3, arg4, (struct sockaddr *)&sin, (socklen_t *)&slen);
 
 			if (retval < 0) {
-				efree(recv_buf);
 				PHP_SOCKET_ERROR(php_sock, "unable to recvfrom", errno);
+				efree(recv_buf);
 				RETURN_FALSE;
 			}
 
@@ -1837,8 +1876,8 @@ PHP_FUNCTION(socket_recvfrom)
 			retval = recvfrom(php_sock->bsd_socket, recv_buf, arg3, arg4, (struct sockaddr *)&sin6, (socklen_t *)&slen);
 
 			if (retval < 0) {
-				efree(recv_buf);
 				PHP_SOCKET_ERROR(php_sock, "unable to recvfrom", errno);
+				efree(recv_buf);
 				RETURN_FALSE;
 			}
 
