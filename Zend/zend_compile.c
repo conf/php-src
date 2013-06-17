@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | Zend Engine                                                          |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1998-2012 Zend Technologies Ltd. (http://www.zend.com) |
+   | Copyright (c) 1998-2013 Zend Technologies Ltd. (http://www.zend.com) |
    +----------------------------------------------------------------------+
    | This source file is subject to version 2.00 of the Zend license,     |
    | that is bundled with this package in the file LICENSE, and is        | 
@@ -3414,10 +3414,11 @@ void zend_do_begin_class_declaration(const znode *class_token, znode *class_name
 		/* Prefix class name with name of current namespace */
 		znode tmp;
 
+		tmp.op_type = IS_CONST;
 		tmp.u.constant = *CG(current_namespace);
 		zval_copy_ctor(&tmp.u.constant);
 		zend_do_build_namespace_name(&tmp, &tmp, class_name TSRMLS_CC);
-		class_name = &tmp;
+		*class_name = tmp;
 		efree(lcname);
 		lcname = zend_str_tolower_dup(Z_STRVAL(class_name->u.constant), Z_STRLEN(class_name->u.constant));
 	}
@@ -3529,7 +3530,7 @@ void zend_do_end_class_declaration(const znode *class_token, const znode *parent
 	ce->line_end = zend_get_compiled_lineno(TSRMLS_C);
 
 	if (!(ce->ce_flags & (ZEND_ACC_INTERFACE|ZEND_ACC_EXPLICIT_ABSTRACT_CLASS))
-		&& ((parent_token->op_type != IS_UNUSED) || (ce->num_interfaces > 0))) {
+		&& (parent_token || (ce->num_interfaces > 0))) {
 		zend_verify_abstract_class(ce TSRMLS_CC);
 		if (ce->num_interfaces) {
 			do_verify_abstract_class(TSRMLS_C);
@@ -4018,7 +4019,7 @@ void zend_do_shell_exec(znode *result, const znode *cmd TSRMLS_DC) /* {{{ */
 			break;
 	}
 	opline->op1 = *cmd;
-	opline->op2.u.opline_num = 0;
+	opline->op2.u.opline_num = 1;
 	opline->extended_value = ZEND_DO_FCALL;
 	SET_UNUSED(opline->op2);
 

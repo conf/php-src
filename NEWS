@@ -1,14 +1,155 @@
 PHP                                                                        NEWS
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-?? ??? 2013, PHP 5.3.21
+?? ??? 2013, PHP 5.3.27
+
+- Core:
+  . Fixed bug #64966 (segfault in zend_do_fcall_common_helper_SPEC). (Laruence)
+  . Fixed bug #64960 (Segfault in gc_zval_possible_root). (Laruence)
+  . Fixed bug #64934 (Apache2 TS crash with get_browser()). (Anatol)
+  . Fixed bug #63186 (compile failure on netbsd). (Matteo)
+
+- DateTime:
+  . Fixed bug #53437 (Crash when using unserialized DatePeriod instance).
+    (Gustavo, Derick, Anatol)
+
+- PDO_firebird:
+  . Fixed bug #64037 (Firebird return wrong value for numeric field).
+    (Matheus Degiovani, Matteo)
+  . Fixed bug #62024 (Cannot insert second row with null using parametrized
+    query). (patch by james@kenjim.com, Matheus Degiovani, Matteo)
+
+- PDO_pgsql:
+  . Fixed bug #64949 (Buffer overflow in _pdo_pgsql_error). (Remi)
+
+- pgsql:
+  . Fixed bug #64609 (pg_convert enum type support). (Matteo)
+
+- SPL:
+  . Fixed bug #64997 (Segfault while using RecursiveIteratorIterator on 
+    64-bits systems). (Laruence)
+
+06 Jun 2013, PHP 5.3.26
+
+- Core:
+  . Fixed bug #64879 (Heap based buffer overflow in quoted_printable_encode,
+    CVE 2013-2110). (Stas)
+
+- Calendar:
+  . Fixed bug #64895 (Integer overflow in SndToJewish). (Remi)
+
+- FPM:
+  . Fixed some possible memory or resource leaks and possible null dereference
+    detected by code coverity scan. (Remi)
+  . Log a warning when a syscall fails. (Remi)
+
+- MySQLi:
+  . Fixed bug #64726 (Segfault when calling fetch_object on a use_result and DB
+    pointer has closed). (Laruence)
+
+- Phar
+  . Fixed bug #64214 (PHAR PHPTs intermittently crash when run on DFS, SMB or 
+    with non std tmp dir). (Pierre)
+
+- Streams:
+  . Fixed bug #64770 (stream_select() fails with pipes returned by proc_open()
+    on Windows x64). (Anatol)
+
+- Zend Engine:
+  . Fixed bug #64821 (Custom Exception crash when internal properties
+    overridden). (Anatol)
+
+09 May 2013, PHP 5.3.25
+
+- Core:
+  . Fixed bug #64578 (debug_backtrace in set_error_handler corrupts zend heap: 
+    segfault). (Laruence)
+  . Fixed bug #64458 (dns_get_record result with string of length -1). (Stas)
+  . Fixed bugs #47675 and #64577 (fd leak on Solaris). (Rasmus)
+
+- Streams:
+  . Fixed Windows x64 version of stream_socket_pair() and improved error
+    handling. (Anatol Belski)
+
+- Zip:
+  . Fixed bug #64342 (ZipArchive::addFile() has to check for file existence).
+    (Anatol)
+
+11 Apr 2013, PHP 5.3.24
+
+- Core
+  . Fixed bug #64370 (microtime(true) less than $_SERVER['REQUEST_TIME_FLOAT']).
+    (Anatol)
+  . Fixed bug #63914 (zend_do_fcall_common_helper_SPEC does not handle
+    exceptions properly). (Jeff Welch)
+  . Fixed bug #62343 (Show class_alias In get_declared_classes()) (Dmitry)
+
+- PCRE:
+  . Merged PCRE 8.32). (Anatol)
+
+- mysqlnd
+  . Fixed bug #63530 (mysqlnd_stmt::bind_one_parameter crashes, uses wrong alloc
+    for stmt->param_bind). (Andrey)
+
+- DateTime
+  . Fixed bug #62852 (Unserialize Invalid Date causes crash). (Anatol)
+
+- Zip:
+  . Bug #64452 (Zip crash intermittently). (Anatol)
+
+
+14 Mar 2013, PHP 5.3.23
+
+- Phar:
+  . Fixed timestamp update on Phar contents modification. (Dmitry)
+
+- SPL:
+  . Fixed bug #64264 (SPLFixedArray toArray problem). (Laruence)
+  . Fixed bug #64228 (RecursiveDirectoryIterator always assumes SKIP_DOTS).
+    (patch by kriss@krizalys.com, Laruence)
+  . Fixed bug #52861 (unset fails with ArrayObject and deep arrays). 
+    (Mike Willbanks)
+
+21 Feb 2013, PHP 5.3.22
+
+- Zend Engine:
+  . Fixed bug #64099 (Wrong TSRM usage in zend_Register_class alias). (Johannes)
+  . Fixed bug #63899 (Use after scope error in zend_compile). (Laruence)
+
+- Core
+  . Fixed bug #63943 (Bad warning text from strpos() on empty needle).
+    (Laruence)
+
+- Date:
+  . Fixed bug #55397 (comparsion of incomplete DateTime causes SIGSEGV).
+    (Laruence, Derick)
+
+- FPM:
+  . Fixed bug #63999 (php with fpm fails to build on Solaris 10 or 11). (Adam)
+
+- SOAP
+  . Added check that soap.wsdl_cache_dir conforms to open_basedir
+    (CVE-2013-1635). (Dmitry)
+  . Disabled external entities loading (CVE-2013-1643). (Dmitry)
+
+- SPL:
+  . Fixed bug #64106 (Segfault on SplFixedArray[][x] = y when extended). (Nikita Popov)
+
+17 Jan 2013, PHP 5.3.21
 
 - Zend Engine:
   . Fixed bug #63762 (Sigsegv when Exception::$trace is changed by user).
     (Johannes)
 
-?? ??? 2012, PHP 5.3.20
+- cURL extension:
+  . Fixed bug (segfault due to libcurl connection caching). (Pierrick)
+  . Fixed bug #63795 (CURL >= 7.28.0 no longer support value 1 for
+    CURLOPT_SSL_VERIFYHOST). (Pierrick)
+  . Fixed bug #63352 (Can't enable hostname validation when using curl stream
+    wrappers). (Pierrick)
+  . Fixed bug #55438 (Curlwapper is not sending http header randomly).
+    (phpnet@lostreality.org, Pierrick)
 
-#### ADD NEWS TO 5.3.21 ONLY ####
+20 Dec 2012, PHP 5.3.20
 
 - Zend Engine:
   . Fixed bug #63635 (Segfault in gc_collect_cycles). (Dmitry)

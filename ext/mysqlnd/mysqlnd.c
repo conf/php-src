@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 2006-2012 The PHP Group                                |
+  | Copyright (c) 2006-2013 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -690,6 +690,8 @@ MYSQLND_METHOD(mysqlnd_conn, connect)(MYSQLND * conn,
 	/* we allow load data local infile by default */
 	mysql_flags |= CLIENT_LOCAL_FILES | CLIENT_PS_MULTI_RESULTS;
 	mysql_flags |= MYSQLND_CAPABILITIES;
+
+	mysql_flags |= conn->options.flags; /* use the flags from set_client_option() */
 
 	if (db) {
 		mysql_flags |= CLIENT_CONNECT_WITH_DB;
