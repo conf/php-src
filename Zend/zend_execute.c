@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | Zend Engine                                                          |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1998-2012 Zend Technologies Ltd. (http://www.zend.com) |
+   | Copyright (c) 1998-2013 Zend Technologies Ltd. (http://www.zend.com) |
    +----------------------------------------------------------------------+
    | This source file is subject to version 2.00 of the Zend license,     |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -898,13 +898,10 @@ static inline zval* zend_assign_to_variable(zval **variable_ptr_ptr, zval *value
 			} else if (EXPECTED(!PZVAL_IS_REF(value))) {
 				Z_ADDREF_P(value);
 				*variable_ptr_ptr = value;
-				if (EXPECTED(variable_ptr != &EG(uninitialized_zval))) {
-					GC_REMOVE_ZVAL_FROM_BUFFER(variable_ptr);
-					zval_dtor(variable_ptr);
-					efree(variable_ptr);
-				} else {
-					Z_DELREF_P(variable_ptr);
-				}
+				ZEND_ASSERT(variable_ptr != &EG(uninitialized_zval));
+				GC_REMOVE_ZVAL_FROM_BUFFER(variable_ptr);
+				zval_dtor(variable_ptr);
+				efree(variable_ptr);
 				return value;
 			} else {
 				goto copy_value;
@@ -1147,6 +1144,10 @@ convert_to_array:
 					zend_error_noreturn(E_ERROR, "[] operator not supported for strings");
 				}
 
+				if (type != BP_VAR_UNSET) {
+					SEPARATE_ZVAL_IF_NOT_REF(container_ptr);
+				}
+
 				if (Z_TYPE_P(dim) != IS_LONG) {
 
 					switch(Z_TYPE_P(dim)) {
@@ -1174,9 +1175,6 @@ convert_to_array:
 					zval_copy_ctor(&tmp);
 					convert_to_long(&tmp);
 					dim = &tmp;
-				}
-				if (type != BP_VAR_UNSET) {
-					SEPARATE_ZVAL_IF_NOT_REF(container_ptr);
 				}
 				container = *container_ptr;
 				result->str_offset.str = container;
@@ -1384,7 +1382,7 @@ static void zend_fetch_property_address(temp_variable *result, zval **container_
 	}
 
 	if (Z_OBJ_HT_P(container)->get_property_ptr_ptr) {
-		zval **ptr_ptr = Z_OBJ_HT_P(container)->get_property_ptr_ptr(container, prop_ptr, key TSRMLS_CC);
+		zval **ptr_ptr = Z_OBJ_HT_P(container)->get_property_ptr_ptr(container, prop_ptr, type, key TSRMLS_CC);
 		if (NULL == ptr_ptr) {
 			zval *ptr;
 
@@ -1523,9 +1521,9 @@ void zend_free_compiled_variables(zend_execute_data *execute_data) /* {{{ */
 }
 /* }}} */
 
-/*  
+/*
  * Stack Frame Layout (the whole stack frame is allocated at once)
- * ================== 
+ * ==================
  *
  *                             +========================================+
  *                             | zend_execute_data                      |<---+

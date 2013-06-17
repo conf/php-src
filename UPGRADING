@@ -24,41 +24,11 @@ PHP 5.5 UPGRADE NOTES
 - Drop Windows XP and 2003 support. (Pierre)
 - All internal case insensitivity handling for class, function and constant 
   names is done according to ASCII rules, current locale settings are ignored. 
+- self, parent & static keywords now are always case-insensitive (see bug
+  #60833).
 - php_logo_guid(), php_egg_logo_guid(), php_real_logo_guid() and 
   zend_logo_guid() have been removed
 - Removal of Logo GUIDs
-
-- extensions can't override zend_execute() any more, they should override
-  zend_execute_ex() instead. The EG(current_execute_data) is already
-  initialized in zend_execute_ex(), so for compatibility extensions
-  may need to use EG(current_execute_data)->prev_execute_data instead.
-- removed EG(arg_types_stack), EX(fbc), EX(called_scope), EX(current_object)
-- added op_array->nested_calls. It's calculated at compile time.
-- added EX(call_slots). It is an array to store information about syntaticaly
-  nested calls (e.g. foo(bar())). It's preallocated together with execute_data.
-- added EX(call) - pointer to a current calling function. Actually an
-  element of EX(call_slots)
-- opcodes INIT_METHOD_CALL, ZEND_INIT_STATIC_METHOD_CALL,
-  ZEND_INIT_FCALL_BY_NAME, ZEND_INIT_NS_FCALL_BY_NAME use result.num as
-  an index in EX(call_slots)
-- opcode ZEND_NEW uses extended_vallue as an index in EX(call_slots)
-- opcoes ZEND_DO_FCALL and ZEND_DO_FCALL_BY_NAME use op2.num as
-  an index in EX(call_slots)
-- added op_array->used_stack. It's calculated at compile time and the
-  corresponding stack space is preallocated together with execute_data.
-  ZEND_SEND* and ZEND_DO_FCALL* don't need to check for stack overflow
-  anymore.
-- Removed execute_data->Ts field. The VM temporary variables always allocated
-  immediately before execute_data structure. Now they are accessed by offset
-  from the execute_data base pointer (instead of execute_data->Ts). Compiler
-  stores new offsets in op_array->opcodes[*].op?.num. You can use macros
-  EX_TMP_VAR() and EX_TMP_VAR_NUM() to access temp_variable by offset or
-  number. You can convert number to offset using EX_TMP_VAR_NUM(0, num) or
-  offset to number (EX_TMP_VAR_NUM(0,0)-EX_TMP_VAR(0,offset)).
-- Removed execute_data->CVs field. The VM compiled variables always allocated
-  immediately after execute_data structure. Now they are accessed by offset
-  from the execute_data base pointer (instead of execute_data->CVs). You can
-  use macros EX_CV_NUM() to access compiled variables by number.
 
 ========================================
 2. New Features
@@ -75,11 +45,23 @@ PHP 5.5 UPGRADE NOTES
   for example. (https://wiki.php.net/rfc/empty_isset_exprs)
 - Added generators.
   (https://wiki.php.net/rfc/generators)
+- ClassName::class syntax returning full class name for a class as 
+  a string constant. (https://wiki.php.net/rfc/class_name_scalars)
+- Added support for non-scalar Iterator keys in foreach.
+  (https://wiki.php.net/rfc/foreach-non-scalar-keys).
+- Bundled Zend OPcache extension
+ (https://wiki.php.net/rfc/optimizerplus)
 
 ========================================
 2. Changes in SAPI modules
 ========================================
 
+- Support for changing the process's title in CLI/CLI-Server SAPIs. (Keyur)
+  (https://wiki.php.net/rfc/cli_process_title)
+- Support for systemd in php-fpm:
+  Add --with-fpm-systemd option to report health to systemd, and
+  systemd_interval option to configure this. The service can now use
+  Type=notify in the systemd unit file. (Remi)
 
 ========================================
 3. Deprecated Functionality
@@ -105,10 +87,11 @@ PHP 5.5 UPGRADE NOTES
 
 - pack()/unpack() had the following changes, which bring it more in line
   with Perl's behavior:
-  - Implemented format character "Z": NUL-padded string
-  - "a" now does not remove trailing NUL characters on unpack() anymore
-  - "A" will now strip all trailing ASCII whitespace on unpack() (it used to
-    remove only trailing spaces).
+  - Implemented format character "Z": NULL padded string, with trailing NULL
+    bytes removed.
+  - Changed format character "a": this no longer removes trailing NULL bytes.
+  - Changed format character "A": all trailing ASCII whitespace is now removed
+    (defined as spaces, tabs, \r, \n and NULL).
 - MessageFormatter::format() and related functions now accepted named arguments
   and mixed numeric/named arguments in ICU 4.8+.
 - MessageFormatter::format() and related functions now don't error out when
@@ -148,17 +131,37 @@ PHP 5.5 UPGRADE NOTES
   Furthermore both set_error_handler(NULL) and set_exception_handler(NULL) will
   now return the previously defined error/exception handler. Previously
   bool(true) was returned.
+- setcookie(), setrawcookie() and ext/session now send Max-Age headers alongside
+  Expires headers. (see https://wiki.php.net/rfc/cookie_max-age)
+- curl_setopt now accepts new option CURLOPT_SAFE_UPLOAD and CURLFile object for
+  safer file uploads (see https://wiki.php.net/rfc/curl-file-upload)
+- Functions in the socket extension now do not emit warnings when the errno is
+  EAGAIN, EWOULDBLOCK or EINPROGRESS.
 
 ========================================
 5. New Functions
 ========================================
 
 - Core:
+  - array_column()
   - boolval()
   - password_get_info()
   - password_hash()
   - password_needs_rehash()
   - password_verify()
+
+- cURL:
+  - curl_file_create
+
+- GD
+  - imageflip
+  - imagecrop
+  - imagecropauto
+  - imagesetinterpolation
+  - imageaffine
+  - imageaffinematrixget
+  - imageaffinematrixconcat
+  - imagescale
 
 - Hash:
   - hash_pbkdf2()
@@ -245,8 +248,19 @@ PHP 5.5 UPGRADE NOTES
   - IntlDateFormatter::getTimeZone()
   - IntlDateFormatter::setTimeZone()
 
+- Sockets:
+  - socket_sendmsg()
+  - socket_recvmsg()
+  - socket_cmsg_space()
+
 - SPL:
   - SplFixedArray::__wakeup()
+  - SplDoublyLinkedList::add()
+
+- Zend OPcache
+ - opcache_get_configuration()
+ - opcache_get_status()
+ - opcache_reset()
 
 ========================================
 6. New Classes and Interfaces
@@ -259,6 +273,10 @@ PHP 5.5 UPGRADE NOTES
   - IntlBreakIterator
   - IntlRuleBasedBreakIterator
   - IntlCodePointBreakIterator
+  - UConverter
+
+- cURL:
+  - CURLFile
 
 ========================================
 7. Removed Extensions
@@ -279,9 +297,58 @@ PHP 5.5 UPGRADE NOTES
 - mysqli:
   - Added MYSQLI_SERVER_PUBLIC_KEY constant to be used with mysqli_options()
 
+- cURL:
+  - Added CURLOPT_SAFE_UPLOAD to be used with curl_setopt().
+  - Added CURL_WRAPPERS_ENABLED to reflect --with-curlwrappers.
+
+- GD
+  - Added constants for imageflip:
+    . IMG_FLIP_HORIZONTAL
+	. IMG_FLIP_VERTICAL
+    . IMG_FLIP_BOTH
+  - Added constants for imagecrop
+    . IMG_CROP_DEFAULT
+    . IMG_CROP_TRANSPARENT
+    . IMG_CROP_BLACK
+    . IMG_CROP_WHITE
+    . IMG_CROP_SIDES
+    . IMG_CROP_THRESHOLD
+  - Added constants for imagesetinterpolation, used by imagescale
+    imagerotate and imageaffine:
+    . IMG_BELL
+    . IMG_BESSEL
+    . IMG_BILINEAR_FIXED
+    . IMG_BICUBIC
+    . IMG_BICUBIC_FIXED
+    . IMG_BLACKMAN
+    . IMG_BOX
+    . IMG_BSPLINE
+    . IMG_CATMULLROM
+    . IMG_GAUSSIAN
+    . IMG_GENERALIZED_CUBIC
+    . IMG_HERMITE
+    . IMG_HAMMING
+    . IMG_HANNING
+    . IMG_MITCHELL
+    . IMG_POWER
+    . IMG_QUADRATIC
+    . IMG_SINC
+    . IMG_NEAREST_NEIGHBOUR
+    . IMG_WEIGHTED4
+    . IMG_TRIANGLE
+  - Added constants for imageaffinematrixget
+    . IMG_AFFINE_TRANSLATE
+    . IMG_AFFINE_SCALE
+    . IMG_AFFINE_ROTATE
+    . IMG_AFFINE_SHEAR_HORIZONTAL
+    . IMG_AFFINE_SHEAR_VERTICAL
+
 ========================================
 10. Changes to INI File Handling
 ========================================
+
+- Core:
+  - Added sys_temp_dir INI directive, for specifying temp directory.
 
 - Intl:
   - Added intl.use_exceptions INI directive, which controls what happens when
@@ -291,6 +358,33 @@ PHP 5.5 UPGRADE NOTES
   - Added mysqlnd.sha256_server_public_key INI PERDIR setting that affects all
     APIs which use(are built) for mysqlnd. This allows ext/mysqli to be used
 	with the new auth protocol, although at coarser level.
+
+- Zend OPcache (See ext/opcache/README for more details)
+  - Added the following directives:
+    - opcache.enable (default "1")
+    - opcache.memory_consumption (default "64")
+    - opcache.interned_strings_buffer (default "4")
+    - opcache.max_accelerated_files (default "2000")
+    - opcache.max_wasted_percentage (default "5")
+    - opcache.use_cwd (default "1")
+    - opcache.validate_timestamps (default "1")
+    - opcache.revalidate_freq (default "2")
+    - opcache.revalidate_path (default "0")
+    - opcache.save_comments (default "1")
+    - opcache.load_comments (default "1")
+    - opcache.fast_shutdown (default "0")
+    - opcache.enable_file_override (default "0")
+    - opcache.optimization_level (default "0xffffffff")
+    - opcache.inherited_hack (default "1")
+    - opcache.blacklist_filename (default "")
+    - opcache.max_file_size (default "0")
+    - opcache.consistency_checks (default "0")
+    - opcache.force_restart_timeout (default "180")
+    - opcache.error_log (default "" which means stderr)
+    - opcache.log_verbosity_level (default "1")
+    - opcache.preferred_memory_model (default "")
+    - opcache.protect_memory (default "0")
+    - opcache.mmap_base (Windows-only)
 
 ========================================
 11. Windows Support

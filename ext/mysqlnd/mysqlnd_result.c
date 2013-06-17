@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 2006-2012 The PHP Group                                |
+  | Copyright (c) 2006-2013 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -486,7 +486,7 @@ mysqlnd_query_read_result_set_header(MYSQLND_CONN_DATA * conn, MYSQLND_STMT * s 
 						mnd_efree(conn->current_result);
 						conn->current_result = NULL;
 					}
-					DBG_ERR("Error ocurred while reading metadata");
+					DBG_ERR("Error occurred while reading metadata");
 					break;
 				}
 
@@ -498,7 +498,7 @@ mysqlnd_query_read_result_set_header(MYSQLND_CONN_DATA * conn, MYSQLND_STMT * s 
 					break;
 				}
 				if (FAIL == (ret = PACKET_READ(fields_eof, conn))) {
-					DBG_ERR("Error ocurred while reading the EOF packet");
+					DBG_ERR("Error occurred while reading the EOF packet");
 					result->m.free_result_contents(result TSRMLS_CC);
 					mnd_efree(result);
 					if (!stmt) {
@@ -1479,6 +1479,7 @@ MYSQLND_METHOD(mysqlnd_res, fetch_into)(MYSQLND_RES * result, unsigned int flags
 	mysqlnd_array_init(return_value, mysqlnd_num_fields(result) * 2);
 	if (FAIL == result->m.fetch_row(result, (void *)return_value, flags, &fetched_anything TSRMLS_CC)) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Error while reading a row");
+		zval_dtor(return_value);
 		RETVAL_FALSE;
 	} else if (fetched_anything == FALSE) {
 		zval_dtor(return_value);
